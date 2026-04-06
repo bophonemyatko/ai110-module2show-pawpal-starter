@@ -42,25 +42,20 @@ def main():
     morning_walk.mark_in_progress()  # currently happening
 
     # ------------------------------------------------------------------
-    # FILTER DEMOS
-    # ------------------------------------------------------------------
-
-    # ------------------------------------------------------------------
     # RECURRENCE DEMO
     # ------------------------------------------------------------------
+    recur_label = lambda t: f"recurrence={t.recurrence}" if t.recurrence else "no recurrence"
 
     print_section("Recurrence: Luna's tasks BEFORE marking Feed Luna complete")
     for t in luna.get_tasks():
-        recur_label = f"recurrence={t.recurrence}" if t.recurrence else "no recurrence"
-        print(f"  {t.title:<25} status={t.status:<12} {recur_label}")
+        print(f"  {t.title:<25} status={t.status:<12} {recur_label(t)}")
 
     print()
     print("  >>> feed_luna.mark_complete() called <<<")
 
     print_section("Recurrence: Luna's tasks AFTER marking Feed Luna complete")
     for t in luna.get_tasks():
-        recur_label = f"recurrence={t.recurrence}" if t.recurrence else "no recurrence"
-        print(f"  {t.title:<25} status={t.status:<12} {recur_label}")
+        print(f"  {t.title:<25} status={t.status:<12} {recur_label(t)}")
 
     print()
     print("  Feed Luna (complete) — original instance, will be skipped by scheduler")
@@ -111,6 +106,13 @@ def main():
     planner = scheduler.generate_plan(owner=owner)
 
     print_section(f"Today's Schedule for {owner.name}")
+    if planner.warnings:
+        print()
+        print("  Warnings:")
+        for w in planner.warnings:
+            print(f"    ! {w}")
+        print()
+
     if not planner.scheduled_tasks:
         print("  No tasks could be scheduled today.")
     else:
@@ -123,10 +125,11 @@ def main():
     print("-" * 50)
     print(f"  Total scheduled: {planner.total_minutes} / {owner.free_minutes_per_day} minutes")
 
-    if owner.filter_tasks(status="complete"):
+    complete_tasks = owner.filter_tasks(status="complete")
+    if complete_tasks:
         print()
         print("  Already complete (skipped by scheduler):")
-        for t in owner.filter_tasks(status="complete"):
+        for t in complete_tasks:
             print(f"    - {t.title}")
 
     if planner.skipped_tasks:

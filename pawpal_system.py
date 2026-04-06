@@ -22,10 +22,8 @@ def _parse_preferred_time(preferred_time: str) -> Optional[int]:
     if not preferred_time or not preferred_time.strip():
         return None
     try:
-        parts = preferred_time.strip().split(":")
-        if len(parts) != 2:
-            return None
-        h, m = int(parts[0]), int(parts[1])
+        h, m = preferred_time.strip().split(":")
+        h, m = int(h), int(m)
         if not (0 <= h <= 23 and 0 <= m <= 59):
             return None
         return h * 60 + m
@@ -145,21 +143,17 @@ class Owner:
 
     def get_all_tasks(self) -> list[Task]:
         """Collect and return all tasks across every pet."""
-        all_tasks = []
-        for pet in self.pets:
-            all_tasks.extend(pet.get_tasks())
-        return all_tasks
+        return [t for pet in self.pets for t in pet.get_tasks()]
 
     def filter_tasks(self, status: Optional[str] = None, pet_name: Optional[str] = None) -> list[Task]:
         """Return tasks filtered by status, pet name, or both.
         Pass status='complete', 'incomplete', or 'in progress'.
         Pass pet_name to restrict results to a specific pet."""
-        tasks = self.get_all_tasks()
-        if pet_name is not None:
-            tasks = [t for t in tasks if t.pet and t.pet.name == pet_name]
-        if status is not None:
-            tasks = [t for t in tasks if t.status == status]
-        return tasks
+        return [
+            t for t in self.get_all_tasks()
+            if (pet_name is None or (t.pet and t.pet.name == pet_name))
+            and (status is None or t.status == status)
+        ]
 
     def update_preferences(self, key: str, value) -> None:
         """Add or update a single preference entry."""
@@ -172,6 +166,7 @@ class DailyPlanner:
         self.pets = pets
         self.scheduled_tasks: list[ScheduledTask] = []
         self.skipped_tasks: list[Task] = []   # tasks dropped due to time budget
+        self.warnings: list[str] = []         # conflict and missed-slot notices
         self.total_minutes: int = 0
 
     def add_scheduled_task(self, scheduled_task: ScheduledTask) -> None:
@@ -215,6 +210,9 @@ class Scheduler:
 
         sorted_tasks = self._interleave_by_pet(self.sort_tasks(owner.get_all_tasks()))
 
+        # Pre-scheduling conflict detection: warn about shared preferred_times
+        planner.warnings.extend(self._detect_conflicts(sorted_tasks))
+
         for task in sorted_tasks:
             if task.status == "complete":
                 continue
@@ -230,6 +228,14 @@ class Scheduler:
                 if pref_offset > elapsed_minutes + buffer:
                     elapsed_minutes = pref_offset
                     buffer = 0  # idle gap already covers the buffer
+                elif elapsed_minutes + buffer > pref_offset:
+                    # We've already passed the preferred slot — flag it
+                    actual = _minutes_to_time(elapsed_minutes + buffer)
+                    pet_label = task.pet.name if task.pet else "—"
+                    planner.warnings.append(
+                        f"'{task.title}' ({pet_label}) missed preferred slot "
+                        f"{task.preferred_time} — scheduled at {actual} instead."
+                    )
 
             if task.duration_minutes > remaining_minutes:
                 task.last_skipped = date.today().isoformat()
@@ -274,6 +280,25 @@ class Scheduler:
 
         planner.skipped_tasks = skipped
         return planner
+
+    def _detect_conflicts(self, tasks: list[Task]) -> list[str]:
+        """Check schedulable tasks for shared preferred_times and return
+        a warning string for each clash found. Never raises — warnings only."""
+        warnings: list[str] = []
+        time_groups: dict[str, list[Task]] = {}
+        for t in tasks:
+            if t.preferred_time and t.status != "complete":
+                time_groups.setdefault(t.preferred_time, []).append(t)
+        for time, group in time_groups.items():
+            if len(group) > 1:
+                names = ", ".join(
+                    f"'{t.title}' ({t.pet.name if t.pet else '—'})" for t in group
+                )
+                warnings.append(
+                    f"Preferred-time conflict at {time}: {names} all request this slot. "
+                    f"Only the first will start on time."
+                )
+        return warnings
 
     def sort_tasks(self, tasks: list[Task]) -> list[Task]:
         """Sort by priority rank (mandatory first, high → low), then by

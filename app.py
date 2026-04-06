@@ -70,7 +70,7 @@ with col2:
 
 if st.button("Add pet"):
     new_pet = Pet(name=pet_name, species=species)
-    st.session_state.owner.add_pet(new_pet)  # Owner.add_pet() stores it in owner.pets
+    st.session_state.owner.add_pet(new_pet)
     st.success(f"Added {new_pet.name} the {new_pet.species}.")
 
 if st.session_state.owner.pets:
@@ -116,7 +116,7 @@ else:
                 mandatory=mandatory,
                 recurrence=recurrence,
             )
-            selected_pet.add_task(task)  # Pet.add_task() stores task and sets task.pet back-reference
+            selected_pet.add_task(task)
             st.success(f"Task '{task.title}' added to {selected_pet.name}.")
         except ValueError as e:
             st.error(str(e))
@@ -150,7 +150,7 @@ if st.button("Generate schedule"):
     owner.free_minutes_per_day = int(free_minutes)
     owner.preferences["skip_weekends"] = skip_weekends
 
-    planner = st.session_state.scheduler.generate_plan(owner)  # Scheduler.generate_plan() builds the DailyPlanner
+    planner = st.session_state.scheduler.generate_plan(owner)
 
     if planner.scheduled_tasks:
         st.success(f"Scheduled {len(planner.scheduled_tasks)} task(s) using {planner.total_minutes} minutes.")
@@ -166,6 +166,10 @@ if st.button("Generate schedule"):
         ])
     else:
         st.warning("No tasks could be scheduled. Check that tasks are added and fit within free time.")
+
+    if planner.warnings:
+        for w in planner.warnings:
+            st.warning(f"⚠ {w}")
 
     if planner.skipped_tasks:
         st.warning(f"{len(planner.skipped_tasks)} task(s) skipped — did not fit in the time budget:")
