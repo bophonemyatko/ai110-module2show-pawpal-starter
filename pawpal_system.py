@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -15,14 +16,12 @@ class Task:
     priority: str
     preferred_time: str
     mandatory: bool
+    pet: Pet = None
 
     def get_priority(self) -> str:
         pass
 
     def edit_task(self) -> None:
-        pass
-
-    def add_task(self) -> None:
         pass
 
 
@@ -40,27 +39,29 @@ class Owner:
         self.free_minutes_per_day = free_minutes_per_day
         self.preferences = preferences
         self.pets: list[Pet] = []
+        self.daily_planner: Optional[DailyPlanner] = None
 
     def update_preferences(self) -> None:
         pass
 
 
 class DailyPlanner:
-    def __init__(self, owner: Owner, pet: Pet):
+    def __init__(self, owner: Owner, pets: list[Pet]):
         self.owner = owner
-        self.pet = pet
+        self.pets = pets
         self.scheduled_tasks: list[ScheduledTask] = []
         self.total_minutes: int = 0
 
-    def add_scheduled_task(self) -> None:
-        pass
+    def add_scheduled_task(self, scheduled_task: ScheduledTask) -> None:
+        self.scheduled_tasks.append(scheduled_task)
+        self.total_minutes += scheduled_task.task.duration_minutes
 
     def get_reason(self) -> str:
         pass
 
 
 class Scheduler:
-    def generate_plan(self, owner: Owner, pet: Pet, tasks: list[Task]) -> DailyPlanner:
+    def generate_plan(self, owner: Owner, tasks: list[Task]) -> DailyPlanner:
         pass
 
     def sort_tasks(self, tasks: list[Task]) -> list[Task]:

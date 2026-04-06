@@ -5,51 +5,54 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
-Owner - name: str
-        free_minutes_per_day: int
-        preferences: dict
-        Method: 
-            update_peferences()
+- What classes did you include, and what responsibilities did you assign to each?
 
-Pet   - name: str
-        species: str
-        
-Task  - title: str
-        duration_minutes: int
-        priority: str
-        preferred_time: str
-        mandatory: bool
-        Method:
-            get_priority()
-            edit_task()
-            add_task()
+Owner        - name: str
+               free_minutes_per_day: int
+               preferences: dict
+               pets: list[Pet]
+               Method:
+                   update_preferences()
+
+Pet          - name: str
+               species: str
+
+Task         - title: str
+               duration_minutes: int
+               priority: str
+               preferred_time: str
+               mandatory: bool
+               Method:
+                   get_priority()
+                   edit_task()
+                   add_task()
 
 ScheduledTask - task: Task
                 start_time: str
                 end_time: str
                 reason: str
 
-DailyPlanner -  owner: Owner
-                pet: Pet
-                scheduled_task: list[ScheduledTask]
-                total_minutes: int
-                Method:
-                    add_scheduled_task()
-                    get_reason()
+DailyPlanner - owner: Owner
+               pet: Pet
+               scheduled_tasks: list[ScheduledTask]
+               total_minutes: int
+               Method:
+                   add_scheduled_task()
+                   get_reason()
 
-Scheduler - Method:
-                generate_plan(owner, pet, tasks)
-                sort_tasks(tasks)
-                explain_choice(task)
+Scheduler    - Method:
+                   generate_plan(owner, pet, tasks)
+                   sort_tasks(tasks)
+                   explain_choice(task)
 
 
-
-- What classes did you include, and what responsibilities did you assign to each?
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+
+Added pet: pet = None to Task (line 15) because a task like "feed [pet name] should knwo which pet it belongs to. Wihtout this, there's is no way to filter or gorup tasks by pet. 
 
 ---
 
