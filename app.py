@@ -98,11 +98,13 @@ else:
     with col3:
         priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
 
-    col4, col5 = st.columns(2)
+    col4, col5, col6 = st.columns(3)
     with col4:
         preferred_time = st.text_input("Preferred time (e.g. 08:00)", value="")
     with col5:
         mandatory = st.checkbox("Mandatory task")
+    with col6:
+        recurrence = st.selectbox("Recurrence", [None, "daily", "weekly"])
 
     if st.button("Add task"):
         try:
@@ -112,6 +114,7 @@ else:
                 priority=priority,
                 preferred_time=preferred_time,
                 mandatory=mandatory,
+                recurrence=recurrence,
             )
             selected_pet.add_task(task)  # Pet.add_task() stores task and sets task.pet back-reference
             st.success(f"Task '{task.title}' added to {selected_pet.name}.")

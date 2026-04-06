@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as dc_replace
 from datetime import date
 from typing import Optional
 
@@ -48,6 +48,13 @@ class Pet:
         """Return all tasks belonging to this pet."""
         return self.tasks
 
+    def filter_tasks(self, status: Optional[str] = None) -> list[Task]:
+        """Return tasks for this pet, optionally filtered by status.
+        Pass status='complete', 'incomplete', or 'in progress'."""
+        if status is None:
+            return self.tasks
+        return [t for t in self.tasks if t.status == status]
+
 
 @dataclass
 class Task:
@@ -59,18 +66,28 @@ class Task:
     pet: Pet = None
     status: str = "incomplete"            # "incomplete" | "in progress" | "complete"
     last_skipped: Optional[str] = None    # ISO date set when skipped due to time budget
+    recurrence: Optional[str] = None      # None | "daily" | "weekly"
 
     def __post_init__(self):
-        """Validate preferred_time format on creation."""
+        """Validate preferred_time format and recurrence value on creation."""
         if self.preferred_time and _parse_preferred_time(self.preferred_time) is None:
             raise ValueError(
                 f"Invalid preferred_time '{self.preferred_time}'. "
                 "Use HH:MM format (e.g. '08:00')."
             )
+        if self.recurrence not in (None, "daily", "weekly"):
+            raise ValueError(
+                f"Invalid recurrence '{self.recurrence}'. Use 'daily', 'weekly', or None."
+            )
 
     def mark_complete(self) -> None:
-        """Mark this task as fully done. Scheduler will skip it."""
+        """Mark this task as fully done. Scheduler will skip it.
+        If the task recurs daily or weekly, a fresh copy is automatically
+        added back to the pet so it reappears in the next scheduled plan."""
         self.status = "complete"
+        if self.recurrence in ("daily", "weekly") and self.pet is not None:
+            next_task = dc_replace(self, status="incomplete", last_skipped=None)
+            self.pet.add_task(next_task)
 
     def mark_in_progress(self) -> None:
         """Mark this task as actively being worked on."""
@@ -132,6 +149,17 @@ class Owner:
         for pet in self.pets:
             all_tasks.extend(pet.get_tasks())
         return all_tasks
+
+    def filter_tasks(self, status: Optional[str] = None, pet_name: Optional[str] = None) -> list[Task]:
+        """Return tasks filtered by status, pet name, or both.
+        Pass status='complete', 'incomplete', or 'in progress'.
+        Pass pet_name to restrict results to a specific pet."""
+        tasks = self.get_all_tasks()
+        if pet_name is not None:
+            tasks = [t for t in tasks if t.pet and t.pet.name == pet_name]
+        if status is not None:
+            tasks = [t for t in tasks if t.status == status]
+        return tasks
 
     def update_preferences(self, key: str, value) -> None:
         """Add or update a single preference entry."""
