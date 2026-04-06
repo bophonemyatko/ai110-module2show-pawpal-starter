@@ -108,10 +108,16 @@ We chose priority as the primary sorting and time as secondary. This guarantees 
 
 - What part of this project are you most satisfied with?
 
+Actually implementing the logic in UI
+
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
 
+I think i would improve the UI
+
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+The most important lesson was that designing for edge cases forces you to make your core logic explicit. And being as specific as possible. 
