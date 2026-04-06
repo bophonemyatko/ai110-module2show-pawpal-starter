@@ -42,10 +42,18 @@ st.divider()
 # --- Owner setup ---
 st.subheader("Owner")
 owner_name = st.text_input("Owner name", value="Jordan")
-free_minutes = st.number_input("Free minutes per day", min_value=10, max_value=480, value=120)
+col_time, col_wknd = st.columns(2)
+with col_time:
+    free_minutes = st.number_input("Free minutes per day", min_value=10, max_value=480, value=120)
+with col_wknd:
+    skip_weekends = st.checkbox("Skip non-mandatory tasks on weekends", value=False)
 
 if "owner" not in st.session_state:
-    st.session_state.owner = Owner(name=owner_name, free_minutes_per_day=int(free_minutes), preferences={})
+    st.session_state.owner = Owner(
+        name=owner_name,
+        free_minutes_per_day=int(free_minutes),
+        preferences={"skip_weekends": skip_weekends},
+    )
 
 if "scheduler" not in st.session_state:
     st.session_state.scheduler = Scheduler()
@@ -97,15 +105,18 @@ else:
         mandatory = st.checkbox("Mandatory task")
 
     if st.button("Add task"):
-        task = Task(
-            title=task_title,
-            duration_minutes=int(duration),
-            priority=priority,
-            preferred_time=preferred_time,
-            mandatory=mandatory,
-        )
-        selected_pet.add_task(task)  # Pet.add_task() stores task and sets task.pet back-reference
-        st.success(f"Task '{task.title}' added to {selected_pet.name}.")
+        try:
+            task = Task(
+                title=task_title,
+                duration_minutes=int(duration),
+                priority=priority,
+                preferred_time=preferred_time,
+                mandatory=mandatory,
+            )
+            selected_pet.add_task(task)  # Pet.add_task() stores task and sets task.pet back-reference
+            st.success(f"Task '{task.title}' added to {selected_pet.name}.")
+        except ValueError as e:
+            st.error(str(e))
 
     all_tasks = st.session_state.owner.get_all_tasks()
     if all_tasks:
@@ -134,6 +145,7 @@ st.caption("Generates a daily plan from all pets' tasks within the owner's free 
 if st.button("Generate schedule"):
     owner = st.session_state.owner
     owner.free_minutes_per_day = int(free_minutes)
+    owner.preferences["skip_weekends"] = skip_weekends
 
     planner = st.session_state.scheduler.generate_plan(owner)  # Scheduler.generate_plan() builds the DailyPlanner
 
@@ -151,3 +163,15 @@ if st.button("Generate schedule"):
         ])
     else:
         st.warning("No tasks could be scheduled. Check that tasks are added and fit within free time.")
+
+    if planner.skipped_tasks:
+        st.warning(f"{len(planner.skipped_tasks)} task(s) skipped — did not fit in the time budget:")
+        st.table([
+            {
+                "task": t.title,
+                "pet": t.pet.name if t.pet else "—",
+                "duration (min)": t.duration_minutes,
+                "priority": t.priority,
+            }
+            for t in planner.skipped_tasks
+        ])

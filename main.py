@@ -55,13 +55,19 @@ def main():
     print(f"  Total scheduled: {planner.total_minutes} / {owner.free_minutes_per_day} minutes")
     print()
 
-    # --- Show skipped tasks ---
-    all_tasks = owner.get_all_tasks()
-    skipped = [t for t in all_tasks if t.status == "complete"]
-    if skipped:
-        print("  Skipped (already complete):")
-        for t in skipped:
+    # --- Show already-complete tasks ---
+    complete = [t for t in owner.get_all_tasks() if t.status == "complete"]
+    if complete:
+        print("  Already complete (skipped by scheduler):")
+        for t in complete:
             print(f"    - {t.title}")
+
+    # --- Show tasks dropped due to time budget ---
+    if planner.skipped_tasks:
+        print()
+        print("  Skipped (did not fit in time budget):")
+        for t in planner.skipped_tasks:
+            print(f"    - {t.title} ({t.duration_minutes} min, {t.priority} priority)")
 
     print("=" * 50)
 
