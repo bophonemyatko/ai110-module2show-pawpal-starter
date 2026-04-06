@@ -38,7 +38,15 @@ class Task:
     preferred_time: str
     mandatory: bool
     pet: Pet = None
-    completed: bool = False
+    status: str = "incomplete"  # "incomplete" | "in progress" | "complete"
+
+    def mark_complete(self) -> None:
+        """Mark this task as fully done. Scheduler will skip it."""
+        self.status = "complete"
+
+    def mark_in_progress(self) -> None:
+        """Mark this task as actively being worked on."""
+        self.status = "in progress"
 
     def get_priority(self) -> int:
         """Numeric sort rank — lower is higher priority.
@@ -93,6 +101,7 @@ class DailyPlanner:
         self.total_minutes: int = 0
 
     def add_scheduled_task(self, scheduled_task: ScheduledTask) -> None:
+        """Append a scheduled task to the plan and update the total time used."""
         self.scheduled_tasks.append(scheduled_task)
         self.total_minutes += scheduled_task.task.duration_minutes
 
@@ -118,7 +127,7 @@ class Scheduler:
         elapsed_minutes = 0
 
         for task in self.sort_tasks(owner.get_all_tasks()):
-            if task.completed or task.duration_minutes > remaining_minutes:
+            if task.status == "complete" or task.duration_minutes > remaining_minutes:
                 continue
 
             start_time = _minutes_to_time(elapsed_minutes)
