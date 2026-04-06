@@ -46,6 +46,31 @@ The scheduler goes beyond a simple priority queue. Here is what it does:
 
 **Filtering** — `Owner.filter_tasks(status, pet_name)` and `Pet.filter_tasks(status)` let you query tasks by completion status, pet, or both without iterating manually.
 
+## Testing PawPal+
+
+### Running the tests
+
+```bash
+python -m pytest tests/test_pawpal.py -v
+```
+
+### What the tests cover
+
+The test suite contains **10 tests** across three areas:
+
+| Area | Tests | What is verified |
+|------|-------|-----------------|
+| **Sorting correctness** | 3 | Tasks sort chronologically by `preferred_time`; tasks without a preferred time land last; mandatory tasks always precede optional ones regardless of priority label |
+| **Recurrence logic** | 3 | Completing a `daily` task spawns exactly one fresh `incomplete` copy with a clean `last_skipped`; non-recurring tasks do not spawn copies; recurring tasks with no pet assigned complete without crashing |
+| **Conflict detection** | 2 | Two tasks sharing a `preferred_time` produce a warning in `DailyPlanner.warnings`; tasks with distinct preferred times produce no conflict warnings |
+| **Core lifecycle** | 2 | `mark_complete()` transitions status to `"complete"`; `add_task()` correctly grows the pet's task list |
+
+### Confidence Level
+
+**4 / 5 stars**
+
+The core scheduling behaviors — sorting, recurrence, and conflict detection — are fully exercised and all 10 tests pass. One star is held back because the bin-packing second pass, urgency decay, and the `skip_weekends` preference are not yet covered by tests; edge cases in those areas could still hide bugs.
+
 ## Getting started
 
 ### Setup
