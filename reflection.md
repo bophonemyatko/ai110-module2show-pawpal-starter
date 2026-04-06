@@ -5,6 +5,45 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+Owner - name: str
+        free_minutes_per_day: int
+        preferences: dict
+        Method: 
+            update_peferences()
+
+Pet   - name: str
+        species: str
+        
+Task  - title: str
+        duration_minutes: int
+        priority: str
+        preferred_time: str
+        mandatory: bool
+        Method:
+            get_priority()
+            edit_task()
+            add_task()
+
+ScheduledTask - task: Task
+                start_time: str
+                end_time: str
+                reason: str
+
+DailyPlanner -  owner: Owner
+                pet: Pet
+                scheduled_task: list[ScheduledTask]
+                total_minutes: int
+                Method:
+                    add_scheduled_task()
+                    get_reason()
+
+Scheduler - Method:
+                generate_plan(owner, pet, tasks)
+                sort_tasks(tasks)
+                explain_choice(task)
+
+
+
 - What classes did you include, and what responsibilities did you assign to each?
 
 **b. Design changes**
