@@ -33,6 +33,8 @@ def _parse_preferred_time(preferred_time: str) -> Optional[int]:
 
 @dataclass
 class Pet:
+    """Represents a pet owned by the user.
+    Holds the pet's identity and owns the list of care tasks assigned to it."""
     name: str
     species: str
     tasks: list[Task] = field(default_factory=list)
@@ -56,6 +58,8 @@ class Pet:
 
 @dataclass
 class Task:
+    """A single care activity assigned to a pet.
+    Tracks what needs to be done, how long it takes, its priority, and its current status."""
     title: str
     duration_minutes: int
     priority: str
@@ -123,6 +127,7 @@ class Task:
 
 @dataclass
 class ScheduledTask:
+    """A Task that has been placed into the day's plan with a concrete start and end time."""
     task: Task
     start_time: str
     end_time: str
@@ -130,7 +135,10 @@ class ScheduledTask:
 
 
 class Owner:
+    """Represents the pet owner with their available time and scheduling preferences.
+    Acts as the root of the data model — pets and tasks are accessed through the owner."""
     def __init__(self, name: str, free_minutes_per_day: int, preferences: dict):
+        """Initialise the owner with a name, daily time budget, and a preferences dict."""
         self.name = name
         self.free_minutes_per_day = free_minutes_per_day
         self.preferences = preferences
@@ -161,7 +169,10 @@ class Owner:
 
 
 class DailyPlanner:
+    """Holds the output of a single scheduling run — the scheduled tasks, any that were
+    skipped due to budget, and any conflict warnings raised during planning."""
     def __init__(self, owner: Owner, pets: list[Pet]):
+        """Initialise an empty plan for the given owner and their pets."""
         self.owner = owner
         self.pets = pets
         self.scheduled_tasks: list[ScheduledTask] = []
@@ -191,6 +202,8 @@ class DailyPlanner:
 
 
 class Scheduler:
+    """Builds a DailyPlanner from an owner's tasks using priority-ordered, time-aware scheduling.
+    Handles conflict detection, pet fairness, buffers, and a bin-packing second pass."""
     def generate_plan(self, owner: Owner) -> DailyPlanner:
         """Schedule all pet tasks within the owner's daily free time and return
         a DailyPlanner. Applies preferred-time placement, inter-task buffers,

@@ -63,10 +63,14 @@ Added pet: pet = None to Task (line 15) because a task like "feed [pet name] sho
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
 
+Time, prioirty, task status, pet fairness and we decided that mandatory status was raned above everything and is the most important as missing pet's medication or forgeting to feed is not good. 
+
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+
+We chose priority as the primary sorting and time as secondary. This guarantees mandatory tasks always get scheduled. 
 
 ---
 
